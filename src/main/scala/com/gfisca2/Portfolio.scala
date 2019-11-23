@@ -13,7 +13,7 @@ import scala.util.Random
  * @param owned stocks owned with date of purchase and shares
  * @param stocks list of chosen stocks in the desired time period
  */
-class Portfolio(val id : String, val date : Date, val value : Double, val cash : Double, val owned : collection.Map[String, (Date, Double)], val stocks : collection.Map[(String, Date), Double]) {
+class Portfolio(val id : Int, val date : Date, val value : Double, val cash : Double, val owned : collection.Map[String, (Date, Double)], val stocks : collection.Map[(String, Date), Double]) {
 
   val config: Config = ConfigFactory.load("config.conf")
 

@@ -33,11 +33,12 @@ object Init {
   def main(args: Array[String]): Unit = {
 
     val conf: SparkConf = new SparkConf().setAppName("MonteCarloSimulation")
-    val spark: SparkSession = SparkSession.builder.config(conf).getOrCreate()
-    val sc: SparkContext = spark.sparkContext
 
     if(local == 1)
       conf.setMaster("local")
+
+    val spark: SparkSession = SparkSession.builder.config(conf).getOrCreate()
+    val sc: SparkContext = spark.sparkContext
 
     LOG.info("Starting MonteCarlo simulation for stock portfolio losses.")
 
@@ -94,7 +95,7 @@ object Init {
     LOG.info("Starting simulation...")
 
     // here we gather all the csv lines outputted by each simulation and save them in a single file
-    val output = sc.parallelize(1 to 1000).flatMap(i => play("sim_"+i, datesList, selectedStocks))
+    val output = sc.parallelize(1 to 1000).flatMap(i => play(i, datesList, selectedStocks))
 
     LOG.info("Saving output files...")
 
@@ -112,7 +113,7 @@ object Init {
    *
    * @param stocks list of chosen stocks in the desired time period
    */
-  def initPortfolio(id : String, stocks : collection.Map[(String, Date), Double]) : Portfolio = {
+  def initPortfolio(id : Int, stocks : collection.Map[(String, Date), Double]) : Portfolio = {
 
     LOG.info("Initializing first portfolio...")
 
@@ -143,7 +144,7 @@ object Init {
    * @param stocks the stocks pool
    * @return a list of csv lines referring to one simulation
    */
-  def play(simId : String, dates: List[Date], stocks : collection.Map[(String, Date), Double]): List[String] = {
+  def play(simId : Int, dates: List[Date], stocks : collection.Map[(String, Date), Double]): List[String] = {
 
     val portfolioHistory : ListBuffer[Portfolio] = new ListBuffer()
 
