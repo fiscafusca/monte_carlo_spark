@@ -3,37 +3,27 @@ package com.gfisca2
 import java.io._
 
 import com.typesafe.config.{Config, ConfigFactory}
-
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
-import org.apache.spark.SparkConf
-import org.apache.spark.sql.SparkSession
+import org.slf4j.{Logger, LoggerFactory}
 
+/**
+ * Code to extract the tickers names from the SP 500 file.
+ */
 object GetTickers {
 
   val config: Config = ConfigFactory.load("config.conf")
+  val LOG: Logger = LoggerFactory.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
 
-    System.setProperty("hadoop.home.dir", "/")
-
-    val conf = new SparkConf().setAppName("demo").setMaster("local[2]")
-    val spark: SparkSession = SparkSession.builder.config(conf).getOrCreate()
-
-    val file = "res/tickers.csv"
+    val file = config.getString("sim.tickerfile")
     val writer = new BufferedWriter(new FileWriter(file))
-
     val tickers: ListBuffer[String] = new ListBuffer()
-    val keys: String = config.getString("datafetcher.keys")
-    val keyslist: ListBuffer[String] = new ListBuffer()
-    keys.split(",").toList.foreach(e => keyslist += e)
 
-    println("********** START **********")
+    LOG.info("Starting tickers processing...")
 
-    val rdd = spark.sparkContext.parallelize(Array(1 to 10))
-    rdd.count()
-
-    val bufferedSource = Source.fromFile("res/sp_500.csv")
+    val bufferedSource = Source.fromFile(config.getString("sim.sp_500"))
     for (line <- bufferedSource.getLines) {
 
       val cols = line.split(",").map(_.trim)
@@ -47,7 +37,7 @@ object GetTickers {
     tickers.foreach(writer.write)
     writer.close()
 
-    println("********** END **********")
+    LOG.info("Done.")
 
   }
 
