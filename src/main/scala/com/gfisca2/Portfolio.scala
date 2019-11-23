@@ -114,7 +114,7 @@ class Portfolio(val id : Int, val date : Date, val value : Double, val cash : Do
     val start : Double = stocks.getOrElse((ticker, owned(ticker)._1), 0.0)
     val today : Double = stocks.getOrElse((ticker, date), 0.0)
     val diff = today - start
-    val diffProportion = (diff/start)*100
+    val diffProportion = diff/start
     diffProportion
 
   }
