@@ -279,7 +279,7 @@ simulation, so Spark is used upstream to preprocess the data and build the dataf
 To implement it as a map/reduce program, we would need to construct map/reduce tasks for each day, to collect all the values
 of the owned stocks at the end of the day (as set of (day, value owned per stock) key-value pairs) tuples) and reduce them to 
 a (day, total value) key-value pair. In order to parallelize the map/reduce tasks in this context, we would need to parallelize
-the inner computations for each day (similar to what is done [here](https://runawayhorse001.github.io/LearningApacheSpark/mc.html), and since RDDs do not allow nested parallelization, we would not be able to parallelize the 
+the inner computations for each day (similar to what is done [here](https://runawayhorse001.github.io/LearningApacheSpark/mc.html)), and since RDDs do not allow nested parallelization, we would not be able to parallelize the 
 different simulations as well.
 This leads to a significant slow-down in the execution time in a Spark application, that leads to the choice of the 
 approach implemented in this work over the map/reduce structure. 
