@@ -197,7 +197,7 @@ ssh -p 2222 root@{HDP-IP-Address}
 ```
 - Merge and retrieve the results from the HDFS filesystem:
 ```
-hdfs dfs -getmerge <remote_output_dir> <local_output_dir>
+hdfs dfs -getmerge output_dir <local_output_filename>
 ```
 
 Please note that to repeat the computation you need to remove the remote output directory. To do so, type:
@@ -208,10 +208,85 @@ hdfs dfs -rm -r output_dir
 ## GCE (Google Computing Engine) deployment
 
 The steps on GCE are very similar to the ones for the Hortonworks Sandbox. 
+All the instructions to set up a Google Cloud Project on GCE are provided [here](https://cloud.google.com/solutions/monte-carlo-methods-with-hadoop-spark).
 
-TODO: write steps for GCE deployment
+The following steps illustrate how to deploy this Spark application on Google Cloud:
 
+- Git clone the repository following the same steps listed for the SBT CLI and go to the project root folder
+- Assembly the project and generate the .jar file by typing (in the project root folder):
+```
+sbt clean assembly
+```
+- Open the sidebar and go in Storage, select the bucket you created and upload the assembled .jar by clicking on "Upload files"
+- Back in the sidebar, go in Compute Engine -> VM instances, and connect via SSH to the master node of the created cluster
+by clicking on the SSH button of the VM instance named <cluster_name>-m. A terminal will appear in a separate window.
+- Go in the project folder and zip the res directory
+- Upload the zipped res folder to the cloud terminal by clicking on the gearwheel on the top right of the terminal window and 
+selecting "Upload file"
+- Unzip the res folder by typing:
+```
+unzip res.zip
+```
+- Move the res folder to the HDFS filesystem in the /user/root directory:
+```
+hdfs dfs -put res /user/root/
+```
+- Go back to the sidebar of the Google Cloud API, and select Dataproc -> Clusters
+- Select the cluster
+- Click on "Submit job" at the top of the webpage
+- Give a name to the job (optional)
+- Select the region (must be the region of your cluster) and the cluster
+- Select "Spark" as job type
+- In the "Main class or jar" field, type:
+```
+com.gfisca2.Init
+```
+- In the "Jar files" field, insert the path to your jar in the bucket, it should be:
+```
+gs://<bucket-name>/montecarlo.jar
+```
+- Click on "Submit"
+- If you go in Dataproc -> Job you will be able to see the progress of the submitted job. If you wish to see the logs
+during the execution, you can click on the job name.
+
+This screenshot shows the log obtained after the completion of this Spark application:
+![Alt text](screen.jpg "capture")
+
+To get the output:
+
+- First, we need to merge the files and fetch them from HDFS. Go in the cloud terminal and type:
+```
+hdfs dfs -getmerge output_dir <local_output_filename>
+```
+- To download the file, click on the the gearwheel on the top right of the terminal window and select "Download file"
+- Save the output file to the desired location and add the .csv extension.
 
 ## Results
 
-TODO: upload results csv file
+The output file is a .csv file contained in the "results" folder (these results were computed on GCE). Each simulation is performed over March 2018. The first
+element in the .csv line is the simulation id, in order to distinguish the simulations from each other. The second element
+is the timestamp, i.e. the date in which the portfolio value was computed, and the third is the portfolio value itself.
+As we can see scrolling down in the .cvs file, with the partial randomness of the Monte Carlo method the value of the portfolio
+does not change significantly throughout the month (i.e. we do not experience significant gains nor losses).
+
+## M/R and AWS ER
+
+In order to exploit a full parallelization of the Monte Carlo simulations, this example was not thought as a map/reduce application.
+As showed in the [Monte Carlo simulation example provided by Google](https://cloud.google.com/solutions/monte-carlo-methods-with-hadoop-spark#programming_a_monte_carlo_simulation_in_scala), all the simulation steps are run sequentially, while the
+1000 different simulations are parallelized. The given usage of sc.parallelize does not allow the usage of distributed data inside the
+simulation, so Spark is used upstream to preprocess the data and build the dataframe and to parallelize the simulations. 
+ 
+To implement it as a map/reduce program, we would need to construct map/reduce tasks for each day, to collect all the values
+of the owned stocks at the end of the day (as set of (day, value owned per stock) key-value pairs) tuples) and reduce them to 
+a (day, total value) key-value pair. In order to parallelize the map/reduce tasks in this context, we would need to parallelize
+the inner computations for each day (similar to what is done [here](https://runawayhorse001.github.io/LearningApacheSpark/mc.html), and since RDDs do not allow nested parallelization, we would not be able to parallelize the 
+different simulations as well.
+This leads to a significant slow-down in the execution time in a Spark application, that leads to the choice of the 
+approach implemented in this work over the map/reduce structure. 
+
+As mentioned above, if we wanted to implement this application in Hadoop, the map/reduce task would be reduced to a simple 
+query to the dataframe to extract the stock value for a specific day, and the reducer would return the total portfolio
+value for the specific day. The parallelization would involve the inner operations performed during the day.
+
+Since the performance of the implemented approach is significantly better than that of the M/R approach, this last implementation is not furtherly
+analyzed in this homework.
