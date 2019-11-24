@@ -108,7 +108,7 @@ object Init {
   }
 
   /**
-   * Simplified function for portfolio initialization: we select three well known stocks from the list.
+   * Method for portfolio initialization: we select three well known stocks from the list.
    * We suppose that we are playing with three stocks and buying all of them at the beginning (1 share per stock).
    *
    * @param stocks list of chosen stocks in the desired time period
@@ -135,7 +135,7 @@ object Init {
   }
 
   /**
-   * Function that handles buying and selling stocks for the time period defined, generating one portfolio
+   * Method that handles buying and selling stocks for the time period defined, generating one portfolio
    * per each day. The portfolios are then added to a list from which the csv lines referring to each day
    * will be extracted at the end of the simulation.
    *

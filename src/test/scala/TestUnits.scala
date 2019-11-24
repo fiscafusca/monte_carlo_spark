@@ -50,7 +50,7 @@ class TestUnits extends FlatSpec {
 
   val diff: Double = config.getDouble("test.diff")
   behavior of "getDiff() method"
-  it should "return " + diff + " as the difference proportion from purchase value to current value" in {
+  it should "return " + diff + " as the percentage difference from purchase value to current value" in {
     val testDiff = testPortfolio.getDiff(stock1, date)
     assert(testDiff == diff)
   }
