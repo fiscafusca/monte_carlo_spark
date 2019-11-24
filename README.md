@@ -152,7 +152,7 @@ The Hortonworks Sandbox offer all the services needed to furtherly test the code
 - Download the [Hortonworks Sandbox](https://www.cloudera.com/downloads/hortonworks-sandbox.html), selecting Hortonworks HDP
 - Set up the virtual machine (click [here](https://www.cloudera.com/tutorials/learning-the-ropes-of-the-hdp-sandbox.html) for the Cloudera tutorial)
 - Once the set up is completed, you will see the following screen, showing the IP address for the welcome screen and SSH: 
-![Alt text](histograms/hortonworks.png)
+![Alt text](hortonworks.png)
 - Git clone the repository following the same steps listed for the SBT CLI and go to the project root folder
 - Assembly the project and generate the .jar file by typing:
 ```
