@@ -8,6 +8,8 @@ import scala.util.Random
 /**
  * Daily portfolio class
  *
+ * @param id simulation id
+ * @param date the portfolio date
  * @param value current portfolio value of a specific day
  * @param cash cash value of a specific day (nearly 0 for every day => we want to spend all our cash)
  * @param owned stocks owned with date of purchase and shares
@@ -102,7 +104,7 @@ class Portfolio(val id : Int, val date : Date, val value : Double, val cash : Do
   }
 
   /**
-   * Function to compute the difference (%) between the value of the stock when it was bought and the value
+   * Method to compute the difference (%) between the value of the stock when it was bought and the value
    * of the stock at a specific day.
    *
    * @param ticker ticker of the stock of interest
@@ -120,7 +122,7 @@ class Portfolio(val id : Int, val date : Date, val value : Double, val cash : Do
   }
 
   /**
-   * Function to get the owned stock, alongside the day of purchase and the shares
+   * Method to get the owned stock, alongside the day of purchase and the shares
    *
    * @return the owned map
    */
@@ -129,7 +131,7 @@ class Portfolio(val id : Int, val date : Date, val value : Double, val cash : Do
   }
 
   /**
-   * Function to build the csv line for the output file
+   * Method to build the csv line for the output file
    *
    * @return the csv line
    */
