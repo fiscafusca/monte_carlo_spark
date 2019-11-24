@@ -19,7 +19,7 @@ object Init {
   val config: Config = ConfigFactory.load("config.conf")
   val DATE = "yyyy-MM-dd"
   val toDate = new SimpleDateFormat(DATE)
-  val history : ListBuffer[List[String]] = new ListBuffer()
+  val history: ListBuffer[List[String]] = new ListBuffer()
   val local: Int = config.getInt("sim.local")
   val LOG: Logger = LoggerFactory.getLogger(getClass)
   val startDate: String = config.getString("sim.start")
@@ -34,7 +34,7 @@ object Init {
 
     val conf: SparkConf = new SparkConf().setAppName("MonteCarloSimulation")
 
-    if(local == 1)
+    if (local == 1)
       conf.setMaster("local")
 
     val spark: SparkSession = SparkSession.builder.config(conf).getOrCreate()
@@ -48,7 +48,7 @@ object Init {
 
     // if the parameter "prepr" in the configuration file is set to 0, the preprocessing will be redone
     // prepr is set to 1 by default since the input files provided have already been preprocessed and saved.
-    if(config.getInt("sim.prepr") == 0) {
+    if (config.getInt("sim.prepr") == 0) {
 
       LOG.info("Preprocessing files...")
 
@@ -60,24 +60,24 @@ object Init {
         .select("ticker", "timestamp", "adjusted_close")
 
       df.coalesce(1).write
-        .option("header","true")
+        .option("header", "true")
         .format("com.databricks.spark.csv")
         .save(outputFolderName)
 
     }
 
-    import spark.implicits._
-
     LOG.info("Creating the dataframe...")
 
-    val stocksDF = spark.read.format("csv")
-      .option("header", "true")
-      .load(data)
-      .filter($"timestamp".geq(startDate) && $"timestamp".leq(endDate))
-      .select("ticker", "timestamp", "adjusted_close")
+    import spark.implicits._
 
-    // list of distinct dates in the desired time period
+    val stocksDF = spark.read.format("csv")
+          .option("header", "true")
+          .load("res/processed/*.csv")
+          .filter($"timestamp".geq(config.getString("sim.start")) && $"timestamp".leq(config.getString("sim.end")))
+          .select("ticker", "timestamp", "adjusted_close")
+
     val datesDistinct = stocksDF.select("timestamp").distinct().orderBy($"timestamp".asc).collect().toList
+
     val datesList = datesDistinct.map(d => new Date(toDate.parse(d.toString().replace("[", "").replace("]", "")).getTime))
 
     val stocksRDD = stocksDF.rdd
@@ -113,7 +113,7 @@ object Init {
    *
    * @param stocks list of chosen stocks in the desired time period
    */
-  def initPortfolio(id : Int, stocks : collection.Map[(String, Date), Double]) : Portfolio = {
+  def initPortfolio(id: Int, stocks: collection.Map[(String, Date), Double]): Portfolio = {
 
     LOG.info("Initializing first portfolio...")
 
@@ -121,9 +121,9 @@ object Init {
     val initStock2 = config.getString("sim.init_stock_2")
     val initStock3 = config.getString("sim.init_stock_3")
 
-    val init : collection.Map[(String, Date), Double] = stocks
+    val init: collection.Map[(String, Date), Double] = stocks
       .filter((k: ((String, Date), Double)) => k._1._2 == toDate.parse(config.getString("sim.start")))
-      .filter((k:((String, Date), Double)) => k._1._1 == initStock1 || k._1._1 == initStock2 || k._1._1 == initStock3)
+      .filter((k: ((String, Date), Double)) => k._1._1 == initStock1 || k._1._1 == initStock2 || k._1._1 == initStock3)
 
     val initStocks = mutable.Map[String, (Date, Double)]()
     init.foreach(k => initStocks.put(k._1._1, (k._1._2, 1.0)))
@@ -139,29 +139,29 @@ object Init {
    * per each day. The portfolios are then added to a list from which the csv lines referring to each day
    * will be extracted at the end of the simulation.
    *
-   * @param simId the simulation id
-   * @param dates the dates list defining the time period of interest
+   * @param simId  the simulation id
+   * @param dates  the dates list defining the time period of interest
    * @param stocks the stocks pool
    * @return a list of csv lines referring to one simulation
    */
-  def play(simId : Int, dates: List[Date], stocks : collection.Map[(String, Date), Double]): List[String] = {
+  def play(simId: Int, dates: List[Date], stocks: collection.Map[(String, Date), Double]): List[String] = {
 
-    val portfolioHistory : ListBuffer[Portfolio] = new ListBuffer()
+    val portfolioHistory: ListBuffer[Portfolio] = new ListBuffer()
 
     dates.foreach(d => {
-        if(d.toString == config.getString("sim.start")) {
-          val startPortfolio = initPortfolio(simId, stocks)
-          portfolioHistory+=startPortfolio
-        }
-        else {
-          val dailyPortfolio = portfolioHistory.last.action(d)
-          portfolioHistory += dailyPortfolio
-        }
+      if (d.toString == config.getString("sim.start")) {
+        val startPortfolio = initPortfolio(simId, stocks)
+        portfolioHistory += startPortfolio
       }
+      else {
+        val dailyPortfolio = portfolioHistory.last.action(d)
+        portfolioHistory += dailyPortfolio
+      }
+    }
     )
 
-    val csvLines : ListBuffer[String] = new ListBuffer()
-    portfolioHistory.foreach(p => csvLines+=p.getCsvLine)
+    val csvLines: ListBuffer[String] = new ListBuffer()
+    portfolioHistory.foreach(p => csvLines += p.getCsvLine)
     val csvLinesList = csvLines.toList
     csvLinesList
 
